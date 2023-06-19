@@ -23,48 +23,67 @@
 
 # import the open weather data wrapper module
 from pyowm import OWM
-from abc import ABC
-
+from abc import ABC, abstractmethod
 
 # Implement these classes: Factory, WeatherData, Wind, Humidity, Temperature
-class Factory():
-    def createData(city, data):
-        if (data == "wind"):
-            return Wind()
 
 
-class WatherData(ABC):
-    location = "unknown"
+class WeatherData(ABC):
+    def __init__(self, location):
+        self.location = location
 
     @abstractmethod
-    def output():
+    def output(self):
         pass
 
 
 class Wind(WeatherData):
-    wind_speed = 0
-
-    def __init__(self, speed):
+    def __init__(self, location, speed):
+        super().__init__(location)
         self.wind_speed = speed
 
     def output(self):
-        print("Wind speed of " + wind_speed + " m/s in " + location)
+        print("Wind speed of " + str(self.wind_speed) +
+              " m/s in " + self.location)
 
 
 class Humidity(WeatherData):
-    def __init__(self, temperature):
-        self.temperature = temperature
+    def __init__(self, location, humidity):
+        super().__init__(location)
+        self.humidity = humidity
+
+    def output(self):
+        print("Humidity of " + str(self.humidity) + "% in " + self.location)
 
 
 class Temperature(WeatherData):
-    def __init__(self, humidity):
-        self.humidity = humidity
+    def __init__(self, location, temperature):
+        super().__init__(location)
+        self.temperature = temperature
+
+    def output(self):
+        print("Temperature of " + str(self.temperature) +
+              " °C in " + self.location)
+
+
+class Factory():
+    def createData(self, city, data):
+        owm = OWM('0c26196096af56fb6a9cf51b734a63e2')
+        mgr = owm.weather_manager()
+
+        observation = mgr.weather_at_place(city)
+        w = observation.weather
+
+        if (data == "wind"):
+            return Wind(city, w.wind()['speed'])
+        elif (data == "temperature"):
+            return Temperature(city, w.temperature('celsius')['temp'])
+        elif (data == "humidity"):
+            return Humidity(city, w.humidity)
 
 
 # Create factory object
 factory = Factory()
-
-owm = OWM('0c26196096af56fb6a9cf51b734a63e2')
 
 # Create a WeatherData object of each type (Wind, Temperature, Humidity) at
 # different locations so we can test our factory's createData instance method
